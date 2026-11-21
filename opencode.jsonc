@@ -1,0 +1,16 @@
+{
+    "$schema": "https://opencode.ai/config.json",
+    "agents": {
+      "build": {
+        "mode": "primary",
+        "model": "openai/gpt-6.1-sol",
+        "color": "#00F2FF"
+      },
+      "plan": {
+        "mode": "primary",
+        "model": "openai/gpt-6.1-sol",
+        "color": "#ADFF2F"
+      }
+    }
+  }
+  
