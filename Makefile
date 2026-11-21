@@ -15,3 +15,7 @@ test:
 test_stage_01:
 	@echo "Running all tests on Stage 01..."
 	@go test -run Stage01 -v ./...
+
+test_stage_02:
+	@echo "Running all tests on Stage 02..."
+	@go test -run Stage02 -v ./...
