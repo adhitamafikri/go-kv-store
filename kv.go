@@ -3,7 +3,6 @@ package kv
 import (
 	"context"
 	"errors"
-	"net"
 )
 
 var ErrNotFound = errors.New("kv: Key not found")
@@ -27,14 +26,3 @@ func (db *DB) Merge() error
 
 // Used in stage 10
 func (db *DB) MergeContext(ctx context.Context) error
-
-// Used in Stage 9
-type Server struct{}
-
-func NewServer(db *DB) *Server
-func (s *Server) Serve(l net.Listener) error
-
-// Used inStage 10
-var ErrServerClosed = errors.New("kv: Server closed")
-
-func (s *Server) Shutdown(ctx context.Context) error
