@@ -11,11 +11,12 @@ This structure will be *fully visible by stage 10*
 ```bash
 go-kv-store/
 ├── go.mod                   # module kvstore  (the tests import this path)
-├── kv.go                    # public API: DB, Open, Options, ErrNotFound → engine
+├── tmp/                     # test & local data; only README.md is committed
+├── db.go                    # public API: DB, Open, Options, ErrNotFound → engine
 ├── db_test.go               # stage 1  ┐
 ├── persistence_test.go      # stage 2  │
 ├── index_test.go            # stage 3  │  acceptance tests for the public DB API,
-├── tombstone_test.go        # stage 4  │  black-box (package kv_test), next to kv.go
+├── tombstone_test.go        # stage 4  │  black-box (package kv_test), next to db.go  
 ├── recovery_test.go         # stage 5  │
 ├── segment_test.go          # stage 6  │
 ├── merge_test.go            # stage 7  │

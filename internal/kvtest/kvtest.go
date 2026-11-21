@@ -6,13 +6,63 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sync"
 	"testing"
 
 	kv "github.com/adhitamafikri/go-kv-store"
 )
+
+// TempDir creates a fresh directory for one test inside the project's tmp/
+// folder (next to go.mod), so test data stays inside the repo instead of the
+// system temp dir. The directory is removed when the test ends, unless the
+// environment variable KVTEST_KEEP=1 is set — then it is kept so you can
+// inspect the .data files, e.g. with: xxd tmp/<test>/000001.data
+func TempDir(t testing.TB) string {
+	t.Helper()
+	root, err := projectRoot()
+	if err != nil {
+		t.Fatalf("kvtest.TempDir: %v", err)
+	}
+	base := filepath.Join(root, "tmp")
+	if err := os.MkdirAll(base, 0o755); err != nil {
+		t.Fatalf("kvtest.TempDir: %v", err)
+	}
+	dir, err := os.MkdirTemp(base, unsafeChars.ReplaceAllString(t.Name(), "_")+"-")
+	if err != nil {
+		t.Fatalf("kvtest.TempDir: %v", err)
+	}
+	if os.Getenv("KVTEST_KEEP") == "1" {
+		t.Logf("kvtest: keeping test data in %s", dir)
+	} else {
+		t.Cleanup(func() { os.RemoveAll(dir) })
+	}
+	return dir
+}
+
+var unsafeChars = regexp.MustCompile(`[^A-Za-z0-9_.-]+`)
+
+// projectRoot walks up from the working directory to the folder holding go.mod.
+// (go test runs each package in its own directory, e.g. server/ for the server tests.)
+func projectRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir, nil
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", fmt.Errorf("no go.mod found above the working directory")
+		}
+		dir = parent
+	}
+}
 
 // MustOpen opens a DB in dir or fails the test.
 func MustOpen(t testing.TB, dir string, opts kv.Options) *kv.DB {

@@ -10,7 +10,7 @@ import (
 )
 
 func TestStage01_PutGet(t *testing.T) {
-	db := kvtest.MustOpen(t, t.TempDir(), kv.Options{})
+	db := kvtest.MustOpen(t, kvtest.TempDir(t), kv.Options{})
 	defer kvtest.MustClose(t, db)
 
 	kvtest.MustPut(t, db, "guest:42", "Fikri")
@@ -20,7 +20,7 @@ func TestStage01_PutGet(t *testing.T) {
 }
 
 func TestStage01_Overwrite(t *testing.T) {
-	db := kvtest.MustOpen(t, t.TempDir(), kv.Options{})
+	db := kvtest.MustOpen(t, kvtest.TempDir(t), kv.Options{})
 	defer kvtest.MustClose(t, db)
 
 	kvtest.MustPut(t, db, "k", "v1")
@@ -29,14 +29,14 @@ func TestStage01_Overwrite(t *testing.T) {
 }
 
 func TestStage01_MissingKey(t *testing.T) {
-	db := kvtest.MustOpen(t, t.TempDir(), kv.Options{})
+	db := kvtest.MustOpen(t, kvtest.TempDir(t), kv.Options{})
 	defer kvtest.MustClose(t, db)
 
 	kvtest.MustMiss(t, db, "nope")
 }
 
 func TestStage01_Delete(t *testing.T) {
-	db := kvtest.MustOpen(t, t.TempDir(), kv.Options{})
+	db := kvtest.MustOpen(t, kvtest.TempDir(t), kv.Options{})
 	defer kvtest.MustClose(t, db)
 
 	kvtest.MustPut(t, db, "k", "v")
@@ -52,7 +52,7 @@ func TestStage01_Delete(t *testing.T) {
 }
 
 func TestStage01_EmptyKeyRejected(t *testing.T) {
-	db := kvtest.MustOpen(t, t.TempDir(), kv.Options{})
+	db := kvtest.MustOpen(t, kvtest.TempDir(t), kv.Options{})
 	defer kvtest.MustClose(t, db)
 
 	if err := db.Put(nil, []byte("v")); err == nil {
@@ -61,7 +61,7 @@ func TestStage01_EmptyKeyRejected(t *testing.T) {
 }
 
 func TestStage01_EmptyValueAllowed(t *testing.T) {
-	db := kvtest.MustOpen(t, t.TempDir(), kv.Options{})
+	db := kvtest.MustOpen(t, kvtest.TempDir(t), kv.Options{})
 	defer kvtest.MustClose(t, db)
 
 	kvtest.MustPut(t, db, "k", "")
@@ -69,7 +69,7 @@ func TestStage01_EmptyValueAllowed(t *testing.T) {
 }
 
 func TestStage01_NoAliasing(t *testing.T) {
-	db := kvtest.MustOpen(t, t.TempDir(), kv.Options{})
+	db := kvtest.MustOpen(t, kvtest.TempDir(t), kv.Options{})
 	defer kvtest.MustClose(t, db)
 
 	key := []byte("k")
