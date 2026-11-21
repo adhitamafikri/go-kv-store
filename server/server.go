@@ -11,10 +11,16 @@ import (
 // Used in Stage 9
 type Server struct{}
 
-func NewServer(db *kv.DB) *Server
-func (s *Server) Serve(l net.Listener) error
+func NewServer(db *kv.DB) *Server {
+	return &Server{}
+}
+func (s *Server) Serve(l net.Listener) error {
+	return nil
+}
 
 // Used inStage 10
 var ErrServerClosed = errors.New("kv: Server closed")
 
-func (s *Server) Shutdown(ctx context.Context) error
+func (s *Server) Shutdown(ctx context.Context) error {
+	return nil
+}
