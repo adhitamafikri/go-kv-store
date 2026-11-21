@@ -10,7 +10,7 @@ import (
 )
 
 func TestStage02_CreatesDataFile(t *testing.T) {
-	dir := t.TempDir()
+	dir := kvtest.TempDir(t)
 	db := kvtest.MustOpen(t, dir, kv.Options{})
 	kvtest.MustPut(t, db, "k", "v")
 	kvtest.MustClose(t, db)
@@ -21,7 +21,7 @@ func TestStage02_CreatesDataFile(t *testing.T) {
 }
 
 func TestStage02_SurvivesRestart(t *testing.T) {
-	dir := t.TempDir()
+	dir := kvtest.TempDir(t)
 
 	db := kvtest.MustOpen(t, dir, kv.Options{})
 	kvtest.MustPut(t, db, "guest:1", "Ayu")
@@ -36,7 +36,7 @@ func TestStage02_SurvivesRestart(t *testing.T) {
 }
 
 func TestStage02_LatestWriteWinsAfterRestart(t *testing.T) {
-	dir := t.TempDir()
+	dir := kvtest.TempDir(t)
 
 	db := kvtest.MustOpen(t, dir, kv.Options{})
 	kvtest.MustPut(t, db, "status", "booked")
@@ -50,7 +50,7 @@ func TestStage02_LatestWriteWinsAfterRestart(t *testing.T) {
 }
 
 func TestStage02_AppendAcrossSessions(t *testing.T) {
-	dir := t.TempDir()
+	dir := kvtest.TempDir(t)
 
 	db := kvtest.MustOpen(t, dir, kv.Options{})
 	kvtest.MustPut(t, db, "a", "1")
@@ -68,7 +68,7 @@ func TestStage02_AppendAcrossSessions(t *testing.T) {
 }
 
 func TestStage02_BinarySafe(t *testing.T) {
-	dir := t.TempDir()
+	dir := kvtest.TempDir(t)
 	key := []byte{0x00, 0x0a, 0xff, ' ', '\n'}
 	val := []byte{0x00, 0x00, '\r', '\n', 0xfe}
 
