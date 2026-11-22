@@ -10,7 +10,7 @@ This structure will be *fully visible by stage 10*
 
 ```bash
 go-kv-store/
-├── go.mod                   # module kvstore  (the tests import this path)
+├── go.mod                   # module github.com/adhitamafikri/go-kv-store  (the tests import this path)
 ├── tmp/                     # test & local data; only README.md is committed
 ├── db.go                    # public API: DB, Open, Options, ErrNotFound → engine
 ├── db_test.go               # stage 1  ┐

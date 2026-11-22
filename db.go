@@ -1,57 +1,124 @@
 package kv
 
 import (
+	"bufio"
 	"bytes"
 	"context"
+	"encoding/binary"
 	"errors"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 )
 
-var ErrNotFound = errors.New("kv: Key not found")
+var ErrEmptyKey = errors.New("kv: empty key")
+var ErrOpenDBFile = errors.New("kv: failed opening database file")
+var ErrCloseDBFile = errors.New("kv: failed closing database file")
 
 type DB struct {
-	data map[string][]byte
+	dir  string
+	file *os.File
 }
 
 func Open(dir string, opts Options) (*DB, error) {
-	return &DB{data: make(map[string][]byte)}, nil
-}
+	dbFile, err := os.OpenFile(filepath.Join(dir, "000001.data"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
 
-func (db *DB) Put(key, value []byte) error {
-	// empty key -> error
-	if len(key) == 0 {
-		return errors.New("empty key")
+	if err != nil {
+		return nil, ErrOpenDBFile
 	}
-
-	// db.data[string(key)] = value
-	// The above statement is a bit incorrect
-	// Need to make sure the data is not aliased, therefore we need to copy the value
-	// So when the caller mutates the value that was inserted, it doesn't affect the data in the DB
-	db.data[string(key)] = bytes.Clone(value)
-	return nil
+	return &DB{dir: dir, file: dbFile}, nil
 }
 
 func (db *DB) Get(key []byte) ([]byte, error) {
-	// missing -> ErrNotFound
-	if val, ok := db.data[string(key)]; ok {
-		// return val, nil
-
-		// Utilize bytes.Clone to avoid aliasing
-		return bytes.Clone(val), nil
+	// This method needs its own open and read file implementation, because the `db.file` is already open with append mode
+	file, err := os.OpenFile(filepath.Join(db.dir, "000001.data"), os.O_RDONLY, 0o644)
+	if err != nil {
+		return nil, ErrOpenDBFile
 	}
+	defer file.Close()
+
+	reader := bufio.NewReader(file)
+	header := make([]byte, 8)
+	found := false
+	var value []byte
+
+	for {
+		_, err := io.ReadFull(reader, header)
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			return nil, fmt.Errorf("kv: read: %w", err)
+		}
+
+		kLen := binary.BigEndian.Uint32(header[0:4]) // gets the key length
+		vLen := binary.BigEndian.Uint32(header[4:8]) // gets the value length
+
+		k := make([]byte, kLen) // prepare new key slice
+		v := make([]byte, vLen) // prepare new value slice
+
+		_, err = io.ReadFull(reader, k)
+		if err != nil {
+			return nil, fmt.Errorf("kv: read key: %w", err)
+		}
+
+		_, err = io.ReadFull(reader, v)
+		if err != nil {
+			return nil, fmt.Errorf("kv: read value: %w", err)
+		}
+
+		if bytes.Equal(k, key) {
+			value = v
+			found = true
+		}
+	}
+
+	if found {
+		return value, nil
+	}
+
 	return nil, ErrNotFound
 }
 
-func (db *DB) Delete(key []byte) error {
-	// missing -> nil
-	if _, ok := db.data[string(key)]; !ok {
-		return nil
+func (db *DB) Put(key, value []byte) error {
+	kLen := uint32(len(key))
+	vLen := uint32(len(value))
+
+	if kLen == 0 {
+		return ErrEmptyKey
 	}
 
-	delete(db.data, string(key))
+	if db.file == nil {
+		return ErrOpenDBFile
+	}
+
+	header := make([]byte, 8)
+	binary.BigEndian.PutUint32(header[0:4], kLen) // gets the key length
+	binary.BigEndian.PutUint32(header[4:8], vLen) // gets the value length
+
+	// Construct the data row
+	record := append(header, key...)
+	record = append(record, value...)
+
+	_, err := db.file.Write(record)
+	if err != nil {
+		return fmt.Errorf("kv: write: %w", err)
+	}
+
+	return nil
+}
+
+func (db *DB) Delete(key []byte) error {
 	return nil
 }
 
 func (db *DB) Close() error {
+	err := db.file.Close()
+	if err != nil {
+		return ErrCloseDBFile
+	}
 	return nil
 }
 
